@@ -9,6 +9,9 @@
 # -z Install ZWave components
 #
 
+usage() { echo "Usage: $0 [-n] [-z]" 1>&2; exit 1; }
+
+
 ## Run pre-install apt package dependency checks ##
 
 # Common packages
@@ -41,13 +44,14 @@ fi
 sudo /usr/bin/pip install fabric
 
 git clone https://github.com/home-assistant/fabric-home-assistant.git
+cd /home/$me/fabric-home-assistant
 
-while getopts ":n" opt; do
+while getopts ":nz" opt; do
   case $opt in
     n)
       echo "No Python virtual environment being used." >&2
 
-    ( cd /home/$me/fabric-home-assistant && fab deploy_novenv -H localhost 2>&1 | tee installation_report.txt )
+      fab deploy_novenv -H localhost 2>&1 | tee installation_report.txt
     exit
       ;;
     \?)
@@ -56,6 +60,6 @@ while getopts ":n" opt; do
   esac
 done
 
-( cd /home/$me/fabric-home-assistant && fab deploy -H localhost 2>&1 | tee installation_report.txt )
+deploy -H localhost 2>&1 | tee installation_report.txt )
 exit
 
