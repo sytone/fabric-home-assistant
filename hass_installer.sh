@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
-# Home Assistant Raspberry Pi Installer Kickstarter
+# Home Assistant Installer Kickstarter
 # Copyright (C) 2016 Jonathan Baginski - All Rights Reserved
 # Permission to copy and modify is granted under the MIT License
 # Last revised 5/15/2016
+
+# Options:
+# -n No Python virtual environment
+# -z Install ZWave components
+#
 
 ## Run pre-install apt package dependency checks ##
 
