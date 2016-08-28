@@ -61,7 +61,7 @@ def install_start():
     ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
     ,,,,,,,,,,,                                   ,,,,,,,,,,
     ,,,,,,,,,,,   Welcome to the Home Assistant   ,,,,,,,,,,
-    ,,,,,,,,,,, Raspberry Pi All-In-One Installer ,,,,,,,,,,
+    ,,,,,,,,,,,    DietPi All-In-One Installer    ,,,,,,,,,,
     ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
     """)
     print("* Warning *")
@@ -70,7 +70,7 @@ def install_start():
           Additional commands for upgrading should be run seperately. Please see the Github page for useage instructions""")
     time.sleep(10)
     print("Installer is starting...")
-    print("Your Raspberry Pi will reboot when the installer is complete.")
+    print("Your device will reboot when the installer is complete.")
     time.sleep(5)
 
 
@@ -80,8 +80,16 @@ def update_upgrade():
     sudo("apt-get update")
     sudo("apt-get upgrade -y")
 
-
-def setup_dirs():
+def setup_users(openzwave='no', mosquitto='no'):
+    """ Create service users, etc """
+    sudo("useradd --system hass")
+    sudo("usermod -d /home/hass hass")
+    if mosquitto == 'yes':
+        sudo("useradd mosquitto")
+    if openzwave == 'yes':
+        sudo("usermod -G dialout -a hass")
+    
+def setup_dirs(mosquitto='no'):
     """ Create all needed directories and change ownership """
     with cd("/srv"):
         sudo("mkdir hass")
@@ -93,19 +101,13 @@ def setup_dirs():
         sudo("mkdir -p hass")
         sudo("mkdir -p /home/hass/.homeassistant")
         sudo("chown hass:hass hass")
-    with cd ("/var/run/"):
-        sudo("touch mosquitto.pid")
-        sudo("chown mosquitto:mosquitto mosquitto.pid")
-    with cd ("/var/lib/"):
-        sudo("mkdir mosquitto")
-        sudo("chown mosquitto:mosquitto mosquitto")
-
-def setup_users():
-    """ Create service users, etc """
-    sudo("useradd mosquitto")
-    sudo("useradd --system hass")
-    sudo("usermod -G dialout -a hass")
-    sudo("usermod -d /home/hass hass")
+    if mosquitto == 'yes':
+        with cd ("/var/run/"):
+            sudo("touch mosquitto.pid")
+            sudo("chown mosquitto:mosquitto mosquitto.pid")
+        with cd ("/var/lib/"):
+            sudo("mkdir mosquitto")
+            sudo("chown mosquitto:mosquitto mosquitto")
 
 def install_syscore():
     """ Download and install Host Dependencies. """
@@ -139,52 +141,7 @@ def create_venv():
     with cd("/srv/hass"):
             sudo("virtualenv -p python3 hass_venv", user="hass")
 
-
-#######################################################
-## Build and Install Applications without VirtualEnv ##
-#######################################################
-
-def setup_homeassistant_novenv():
-    """ Install Home-Assistant """
-    sudo("pip3 install homeassistant", user="hass")
-
-def setup_openzwave_novenv():
-    """ Install python-openzwave """
-    sudo("pip3 install --upgrade cython", user="hass")
-    with cd("/srv/hass/src"):
-        sudo("git clone https://github.com/OpenZWave/python-openzwave.git", user="hass")
-        with cd("python-openzwave"):
-            sudo("git checkout python3", user="hass")
-            sudo("make build", user="hass")
-            sudo("make install", user="hass")
-
-def setup_services_novenv():
-    """ Enable applications to start at boot via systemd """
-    hacfg="""
-mqtt:
-  broker: 127.0.0.1
-  port: 1883
-  client_id: home-assistant-1
-  username: pi
-  password: raspberry
-"""
-    with cd("/etc/systemd/system/"):
-        put("mosquitto.service", "mosquitto.service", use_sudo=True)
-        put("home-assistant_novenv.service", "home-assistant_novenv.service", use_sudo=True)
-    with settings(sudo_user='hass'):
-        sudo("/srv/hass/hass_venv/bin/hass --script ensure_config --config /home/hass/.homeassistant")
-
-    fabric.contrib.files.append("/home/hass/.homeassistant/configuration.yaml", hacfg, use_sudo=True)
-    sudo("systemctl enable mosquitto.service")
-    sudo("systemctl enable home-assistant_novenv.service")
-    sudo("systemctl daemon-reload")
-
-
-####################################
-## Build and Install Applications ##
-####################################
-
-def setup_mosquitto():
+def setup_mosquitto(mosusername='pi',mospassword='raspberry'):
     """ Build and Install Mosquitto """
     with cd("/tmp"):
         sudo("curl -O https://libwebsockets.org/git/libwebsockets/snapshot/libwebsockets-1.4-chrome43-firefox-36.tar.gz")
@@ -207,13 +164,59 @@ def setup_mosquitto():
                             sudo("touch pwfile")
                             sudo("chown mosquitto: pwfile")
                             sudo("chmod 0600 pwfile")
-                            sudo("sudo mosquitto_passwd -b pwfile pi raspberry")
+                            sudo("sudo mosquitto_passwd -b pwfile %s %s" % (mosusername,mospassword))
+    with cd("/etc/systemd/system/"):
+        put("mosquitto.service", "mosquitto.service", use_sudo=True)        
+    sudo("systemctl enable mosquitto.service")
+    sudo("systemctl daemon-reload")
+                            
+#######################################################
+## Build and Install Applications without VirtualEnv ##
+#######################################################
 
-def setup_homeassistant():
-    """ Activate Virtualenv, Install Home-Assistant """
-    sudo("source /srv/hass/hass_venv/bin/activate && pip3 install homeassistant", user="hass")
-    with cd("/home/hass/"):
-        sudo("chown -R hass:hass /home/hass/")
+def setup_homeassistant(virtual='no'):
+    """ Install Home-Assistant """
+    if virtual == 'no':
+        sudo("pip3 install homeassistant", user="hass")
+    else:
+        sudo("source /srv/hass/hass_venv/bin/activate && pip3 install homeassistant", user="hass")
+        with cd("/home/hass/"):
+            sudo("chown -R hass:hass /home/hass/")
+        
+
+def setup_openzwave_novenv():
+    """ Install python-openzwave """
+    sudo("pip3 install --upgrade cython", user="hass")
+    with cd("/srv/hass/src"):
+        sudo("git clone https://github.com/OpenZWave/python-openzwave.git", user="hass")
+        with cd("python-openzwave"):
+            sudo("git checkout python3", user="hass")
+            sudo("make build", user="hass")
+            sudo("make install", user="hass")
+
+def setup_services_novenv():
+    """ Enable applications to start at boot via systemd """
+    hacfg="""
+mqtt:
+  broker: 127.0.0.1
+  port: 1883
+  client_id: home-assistant-1
+  username: pi
+  password: raspberry
+"""
+    with cd("/etc/systemd/system/"):
+        put("home-assistant_novenv.service", "home-assistant_novenv.service", use_sudo=True)
+    with settings(sudo_user='hass'):
+        sudo("/srv/hass/hass_venv/bin/hass --script ensure_config --config /home/hass/.homeassistant")
+
+    fabric.contrib.files.append("/home/hass/.homeassistant/configuration.yaml", hacfg, use_sudo=True)
+    sudo("systemctl enable home-assistant_novenv.service")
+    sudo("systemctl daemon-reload")
+
+
+####################################
+## Build and Install Applications ##
+####################################
 
 def setup_openzwave():
     """ Activate Virtualenv, Install python-openzwave"""
@@ -262,13 +265,11 @@ mqtt:
   password: raspberry
 """
     with cd("/etc/systemd/system/"):
-        put("mosquitto.service", "mosquitto.service", use_sudo=True)
         put("home-assistant.service", "home-assistant.service", use_sudo=True)
     with settings(sudo_user='hass'):
         sudo("/srv/hass/hass_venv/bin/hass --script ensure_config --config /home/hass/.homeassistant")
 
     fabric.contrib.files.append("/home/hass/.homeassistant/configuration.yaml", hacfg, use_sudo=True)
-    sudo("systemctl enable mosquitto.service")
     sudo("systemctl enable home-assistant.service")
     sudo("systemctl daemon-reload")
 
@@ -280,8 +281,11 @@ def upgrade_homeassistant():
 ## Deploy! ##
 #############
 
-def deploy():
+def deploy(virtual='no', openzwave='no', mosquitto='no',username='pi',password='raspberry',mosusername='pi',mospassword='raspberry'):
 
+    env.user = username
+    env.password = password
+    
     ## Install Start ##
     install_start()
 
@@ -289,35 +293,39 @@ def deploy():
     update_upgrade()
 
     ## Setup service accounts ##
-    setup_users()
+    setup_users(openzwave, mosquitto)
 
     ## Setup directories ##
-    setup_dirs()
+    setup_dirs(mosquitto)
 
     ## Install dependencies ##
     install_syscore()
-    install_pycore()
+    
+    if virtual == 'yes':
+        ## Install VirtualEnv ##
+        install_pycore()
+        ## Create VirtualEnv ##
+        create_venv()
 
-    ## Create VirtualEnv ##
-    create_venv()
+    if mosquitto == 'yes':
+        ## Build and Install Mosquitto ##
+        setup_mosquitto(mosusername,mospassword)
 
-    ## Build and Install Mosquitto ##
-    setup_mosquitto()
-
-    ## Activate venv, install Home-Assistant ##
-    setup_homeassistant()
+    ## Activate, install Home-Assistant ##
+    setup_homeassistant(virtual)
     
     ## Make apps start at boot ##
     setup_services()
 
-    ## Activate venv, build and install python-openzwave ##
-    setup_openzwave()
-
-    ## Build and install libmicrohttpd ##
-    setup_libmicrohttpd()
-
-    ## Build and install open-zwave-control-panel ##
-    setup_openzwave_controlpanel()
+    if openzwave == 'yes':
+        ## Activate venv, build and install python-openzwave ##
+        setup_openzwave()
+    
+        ## Build and install libmicrohttpd ##
+        setup_libmicrohttpd()
+    
+        ## Build and install open-zwave-control-panel ##
+        setup_openzwave_controlpanel()
 
     ## Reboot the system ##
     reboot()
