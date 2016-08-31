@@ -9,6 +9,8 @@ from fabric.api import *
 import fabric.contrib.files
 import time
 import os
+from string import Template
+
 
 
 env.hosts = ['localhost']
@@ -170,10 +172,6 @@ def setup_mosquitto(mosusername='pi',mospassword='raspberry'):
     sudo("systemctl enable mosquitto.service")
     sudo("systemctl daemon-reload")
                             
-#######################################################
-## Build and Install Applications without VirtualEnv ##
-#######################################################
-
 def setup_homeassistant(virtual='no'):
     """ Install Home-Assistant """
     if virtual == 'no':
@@ -182,52 +180,25 @@ def setup_homeassistant(virtual='no'):
         sudo("source /srv/hass/hass_venv/bin/activate && pip3 install homeassistant", user="hass")
         with cd("/home/hass/"):
             sudo("chown -R hass:hass /home/hass/")
-        
 
-def setup_openzwave_novenv():
+def setup_openzwave(virtual='no'):
     """ Install python-openzwave """
-    sudo("pip3 install --upgrade cython", user="hass")
-    with cd("/srv/hass/src"):
-        sudo("git clone https://github.com/OpenZWave/python-openzwave.git", user="hass")
-        with cd("python-openzwave"):
-            sudo("git checkout python3", user="hass")
-            sudo("make build", user="hass")
-            sudo("make install", user="hass")
-
-def setup_services_novenv():
-    """ Enable applications to start at boot via systemd """
-    hacfg="""
-mqtt:
-  broker: 127.0.0.1
-  port: 1883
-  client_id: home-assistant-1
-  username: pi
-  password: raspberry
-"""
-    with cd("/etc/systemd/system/"):
-        put("home-assistant_novenv.service", "home-assistant_novenv.service", use_sudo=True)
-    with settings(sudo_user='hass'):
-        sudo("/srv/hass/hass_venv/bin/hass --script ensure_config --config /home/hass/.homeassistant")
-
-    fabric.contrib.files.append("/home/hass/.homeassistant/configuration.yaml", hacfg, use_sudo=True)
-    sudo("systemctl enable home-assistant_novenv.service")
-    sudo("systemctl daemon-reload")
-
-
-####################################
-## Build and Install Applications ##
-####################################
-
-def setup_openzwave():
-    """ Activate Virtualenv, Install python-openzwave"""
-    sudo("source /srv/hass/hass_venv/bin/activate && pip3 install --upgrade cython", user="hass")
-    with cd("/srv/hass/src"):
-        sudo("git clone --branch v0.3.1 https://github.com/OpenZWave/python-openzwave.git", user="hass")
-        with cd("python-openzwave"):
-            sudo("git checkout python3", user="hass")
-            sudo("source /srv/hass/hass_venv/bin/activate && make build", user="hass")
-            sudo("source /srv/hass/hass_venv/bin/activate && make install", user="hass")
-
+    if virtual == 'no':
+        sudo("pip3 install --upgrade cython", user="hass")
+        with cd("/srv/hass/src"):
+            sudo("git clone https://github.com/OpenZWave/python-openzwave.git", user="hass")
+            with cd("python-openzwave"):
+                sudo("git checkout python3", user="hass")
+                sudo("make build", user="hass")
+                sudo("make install", user="hass")
+    else:
+        sudo("source /srv/hass/hass_venv/bin/activate && pip3 install --upgrade cython", user="hass")
+        with cd("/srv/hass/src"):
+            sudo("git clone --branch v0.3.1 https://github.com/OpenZWave/python-openzwave.git", user="hass")
+            with cd("python-openzwave"):
+                sudo("git checkout python3", user="hass")
+                sudo("source /srv/hass/hass_venv/bin/activate && make build", user="hass")
+                sudo("source /srv/hass/hass_venv/bin/activate && make install", user="hass")
 
 def setup_libmicrohttpd():
     """ Build and install libmicrohttpd """
@@ -254,28 +225,36 @@ def setup_openzwave_controlpanel():
                 sudo("ln -sd /srv/hass/hass_venv/lib/python3.4/site-packages/libopenzwave-0.3.1-py3.4-linux-armv**6**l.egg/config")
         sudo("chown -R hass:hass /srv/hass/src/open-zwave-control-panel")
 
-def setup_services():
+def update_homeassistant_config(mosusername='pi',mospassword='raspberry'):
     """ Enable applications to start at boot via systemd """
     hacfg="""
 mqtt:
   broker: 127.0.0.1
   port: 1883
   client_id: home-assistant-1
-  username: pi
-  password: raspberry
+  username: $mosusername
+  password: $mospassword
 """
-    with cd("/etc/systemd/system/"):
-        put("home-assistant.service", "home-assistant.service", use_sudo=True)
-    with settings(sudo_user='hass'):
-        sudo("/srv/hass/hass_venv/bin/hass --script ensure_config --config /home/hass/.homeassistant")
-
-    fabric.contrib.files.append("/home/hass/.homeassistant/configuration.yaml", hacfg, use_sudo=True)
-    sudo("systemctl enable home-assistant.service")
-    sudo("systemctl daemon-reload")
+    s = Template(hacfg)
+    fabric.contrib.files.append("/home/hass/.homeassistant/configuration.yaml", s.substitute(mosusername=mosusername, mospassword=mospassword), use_sudo=True)
 
 def upgrade_homeassistant():
     """ Activate Venv, and upgrade Home Assistant to latest version """
     sudo("source /srv/hass/hass_venv/bin/activate && pip3 install homeassistant --upgrade", user="hass")
+
+
+def create_homeassistant_service(virtual='no'):
+    if virtual == 'yes':
+        fabric.contrib.files.upload_template('home-assistant.service.template', '/etc/systemd/system/home-assistant.service', {'hasspath': '/srv/hass/hass_venv/bin/hass'}, use_sudo=True)
+        with settings(sudo_user='hass'):
+            sudo("/srv/hass/hass_venv/bin/hass --script ensure_config --config /home/hass/.homeassistant")
+    else:
+        fabric.contrib.files.upload_template('home-assistant.service.template', '/etc/systemd/system/home-assistant.service', {'hasspath': '/usr/local/bin/hass'}, use_sudo=True)
+        with settings(sudo_user='hass'):
+            sudo("/usr/local/bin/hass --script ensure_config --config /home/hass/.homeassistant")
+    sudo("systemctl enable home-assistant.service")
+    sudo("systemctl daemon-reload")
+
 
 #############
 ## Deploy! ##
@@ -312,14 +291,12 @@ def deploy(virtual='no', openzwave='no', mosquitto='no',username='pi',password='
         setup_mosquitto(mosusername,mospassword)
 
     ## Activate, install Home-Assistant ##
-    setup_homeassistant(virtual)
+    update_homeassistant_config(mosusername,mospassword):
+    create_homeassistant_service(virtual)
     
-    ## Make apps start at boot ##
-    setup_services()
-
     if openzwave == 'yes':
         ## Activate venv, build and install python-openzwave ##
-        setup_openzwave()
+        setup_openzwave(virtual):
     
         ## Build and install libmicrohttpd ##
         setup_libmicrohttpd()
@@ -331,42 +308,3 @@ def deploy(virtual='no', openzwave='no', mosquitto='no',username='pi',password='
     reboot()
 
 
-
-
-def deploy_novenv():
-
-    ## Install Start ##
-    install_start()
-
-    ## Initial Update and Upgrade ##
-    update_upgrade()
-
-    ## Setup service accounts ##
-    setup_users()
-
-    ## Setup directories ##
-    setup_dirs()
-
-    ## Install dependencies ##
-    install_syscore()
-
-    ## Build and Install Mosquitto ##
-    setup_mosquitto()
-
-    ## Activate venv, install Home-Assistant ##
-    setup_homeassistant_novenv()
-
-    ## Make apps start at boot ##
-    setup_services_novenv()
-
-    ## Activate venv, build and install python-openzwave ##
-    setup_openzwave_novenv()
-
-    ## Build and install libmicrohttpd ##
-    setup_libmicrohttpd()
-
-    ## Build and install open-zwave-control-panel ##
-    setup_openzwave_controlpanel()
-
-    ## Reboot the system ##
-    reboot()
