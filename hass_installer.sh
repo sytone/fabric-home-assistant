@@ -142,7 +142,8 @@ sudo /usr/bin/pip3 install fabric3
 echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 echo -e " \e[39;49;1mPulling the addtional install scripts\e[0m "
 echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
-echo -e "\n \e[39;49;1mGIT Repo: \e[90mhttps://github.com/$GIT_REPO/fabric-home-assistant.git\e[0m "
+echo -e " \e[39;49;1mGIT Repo: \e[90mhttps://github.com/$GIT_REPO/fabric-home-assistant.git\e[0m \n"
+rm -fr ./fabric-home-assistant/
 git clone https://github.com/$GIT_REPO/fabric-home-assistant.git
 cd /home/$ME/fabric-home-assistant
 

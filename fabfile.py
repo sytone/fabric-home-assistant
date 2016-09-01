@@ -296,7 +296,7 @@ def deploy(virtual='no', openzwave='no', mosquitto='no',username='pi',password='
     
     if openzwave == 'yes':
         ## Activate venv, build and install python-openzwave ##
-        setup_openzwave(virtual):
+        setup_openzwave(virtual)
     
         ## Build and install libmicrohttpd ##
         setup_libmicrohttpd()
