@@ -103,6 +103,8 @@ def setup_dirs(mosquitto='no'):
         sudo("mkdir -p hass")
         sudo("mkdir -p /home/hass/.homeassistant")
         sudo("chown hass:hass hass")
+    with cd ("/tmp")
+        sudo("mkdir -p hassinstall")
     if mosquitto == 'yes':
         with cd ("/var/run/"):
             sudo("touch mosquitto.pid")
@@ -162,7 +164,7 @@ def setup_mosquitto(mosusername='pi',mospassword='raspberry'):
                         sudo("make")
                         sudo("make install")
                         with cd("/etc/mosquitto"):
-                            put("mosquitto.conf", "mosquitto.conf", use_sudo=True)
+                            put("mosquitto.conf", "mosquitto.conf", use_sudo=True, temp_dir=/tmp/hassinstall)
                             sudo("touch pwfile")
                             sudo("chown mosquitto: pwfile")
                             sudo("chmod 0600 pwfile")
