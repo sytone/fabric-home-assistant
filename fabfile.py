@@ -103,7 +103,7 @@ def setup_dirs(mosquitto='no'):
         sudo("mkdir -p hass")
         sudo("mkdir -p /home/hass/.homeassistant")
         sudo("chown hass:hass hass")
-    with cd ("/tmp")
+    with cd ("/tmp"):
         sudo("mkdir -p hassinstall")
     if mosquitto == 'yes':
         with cd ("/var/run/"):
