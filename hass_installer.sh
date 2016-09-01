@@ -135,9 +135,9 @@ if [ "" == "$PKG_APTITUDE" ]; then
 fi
 
 echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
-echo -e " \e[39;49;1mInstalling Python Fabric\e[0m "
+echo -e " \e[39;49;1mInstalling Python Fabric 3\e[0m "
 echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
-sudo /usr/bin/pip3 install fabric
+sudo /usr/bin/pip3 install fabric3
 
 echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 echo -e " \e[39;49;1mPulling the addtional install scripts\e[0m "
@@ -149,13 +149,13 @@ cd /home/$ME/fabric-home-assistant
 echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 echo -e " \e[39;49;1mRunning fabric deployment\e[0m "
 echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
-echo -e "\n \e[39;49;1m - VIRTUAL_ENV   :\e[90m $VIRTUAL_ENV \e[0m "
-echo -e "\n \e[39;49;1m - ZWAVE_ENABLED :\e[90m $ZWAVE_ENABLED \e[0m "
-echo -e "\n \e[39;49;1m - MOS_ENABLED   :\e[90m $MOS_ENABLED \e[0m "
-echo -e "\n \e[39;49;1m - FAB_USER      :\e[90m $FAB_USER \e[0m "
-echo -e "\n \e[39;49;1m - FAB_PASSWORD  :\e[90m $FAB_PASSWORD \e[0m "
-echo -e "\n \e[39;49;1m - MOS_USER      :\e[90m $MOS_USER \e[0m "
-echo -e "\n \e[39;49;1m - MOS_PASSWORD  :\e[90m $MOS_PASSWORD \e[0m "
+echo -e " \e[39;49;1m - VIRTUAL_ENV   :\e[90m $VIRTUAL_ENV \e[0m "
+echo -e " \e[39;49;1m - ZWAVE_ENABLED :\e[90m $ZWAVE_ENABLED \e[0m "
+echo -e " \e[39;49;1m - MOS_ENABLED   :\e[90m $MOS_ENABLED \e[0m "
+echo -e " \e[39;49;1m - FAB_USER      :\e[90m $FAB_USER \e[0m "
+echo -e " \e[39;49;1m - FAB_PASSWORD  :\e[90m $FAB_PASSWORD \e[0m "
+echo -e " \e[39;49;1m - MOS_USER      :\e[90m $MOS_USER \e[0m "
+echo -e " \e[39;49;1m - MOS_PASSWORD  :\e[90m $MOS_PASSWORD \e[0m "
 
 
 fab deploy:$VIRTUAL_ENV,$ZWAVE_ENABLED,$MOS_ENABLED,username=$FAB_USER,password=$FAB_PASSWORD,mosusername=$MOS_PASSWORD,mospassword=$MOS_PASSWORD -H localhost 2>&1 | tee installation_report.txt 

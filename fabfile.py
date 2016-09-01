@@ -291,7 +291,7 @@ def deploy(virtual='no', openzwave='no', mosquitto='no',username='pi',password='
         setup_mosquitto(mosusername,mospassword)
 
     ## Activate, install Home-Assistant ##
-    update_homeassistant_config(mosusername,mospassword):
+    update_homeassistant_config(mosusername,mospassword)
     create_homeassistant_service(virtual)
     
     if openzwave == 'yes':
