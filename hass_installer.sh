@@ -78,18 +78,18 @@ me=$(whoami)
 
 sudo apt-get update
 
-PKG_PYDEV=$(dpkg-query -W --showformat='${Status}\n' python-dev|grep "install ok installed")
-echo Checking for python-dev: $PKG_PYDEV
+PKG_PYDEV=$(dpkg-query -W --showformat='${Status}\n' python3-dev|grep "install ok installed")
+echo Checking for python3-dev: $PKG_PYDEV
 if [ "" == "$PKG_PYDEV" ]; then
-  echo "No python-dev. Setting up python-dev."
-  sudo apt-get --force-yes --yes install python-dev
+  echo "No python3-dev. Setting up python3-dev."
+  sudo apt-get --force-yes --yes install python3-dev
 fi
 
-PKG_PYPIP=$(dpkg-query -W --showformat='${Status}\n' python-pip|grep "install ok installed")
-echo Checking for python-pip: $PKG_PYPIP
+PKG_PYPIP=$(dpkg-query -W --showformat='${Status}\n' python3-pip|grep "install ok installed")
+echo Checking for python3-pip: $PKG_PYPIP
 if [ "" == "$PKG_PYPIP" ]; then
-  echo "No python-pip. Setting up python-pip."
-  sudo apt-get --force-yes --yes install python-pip
+  echo "No python3-pip. Setting up python3-pip."
+  sudo apt-get --force-yes --yes install python3-pip
 fi
 
 PKG_GIT=$(dpkg-query -W --showformat='${Status}\n' git|grep "install ok installed")
