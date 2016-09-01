@@ -11,10 +11,11 @@ SCRIPT=`basename ${BASH_SOURCE[0]}`
 VIRTUAL_ENV='virtual=no'
 ZWAVE_ENABLED='openzwave=no'
 MOS_ENABLED='mosquitto=no'
-FAB_USER=U
-FAB_PASSWORD=P
-MOS_USER=M
-MOS_PASSWORD=A
+FAB_USER='pi'
+FAB_PASSWORD='raspberry'
+MOS_USER='pi'
+MOS_PASSWORD='raspberry'
+GIT_REPO='sytone'
 
 #Set fonts for Help.
 NORM=`tput sgr0`
@@ -33,86 +34,130 @@ function HELP {
   echo "${REV}-p${NORM}  --Fabric Password. Default is ${BOLD}raspberry${NORM}."
   echo "${REV}-s${NORM}  --Mosquitto username. Default is ${BOLD}pi${NORM}."
   echo "${REV}-a${NORM}  --Mosquitto Password. Default is ${BOLD}raspberry${NORM}."
+  echo "${REV}-r${NORM}  --Git Repo. Default is ${BOLD}sytone${NORM}."
   echo -e "${REV}-h${NORM}  --Displays this help message. No further functions are performed."\\n
   echo -e "Example: ${BOLD}$SCRIPT -vzm${NORM}"\\n
   exit 1
 }
 
-while getopts ":vzmu:p:s:a:" opt; do
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
+echo -e " \e[39;49;1mHome Assistant Installer\e[0m "
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
+
+
+while getopts ":vzmu:p:s:a:r:" opt; do
   case $opt in
     v)
-      echo "Python virtual environment being used." >&2
+      echo "  - Python virtual environment being used." >&2
       VIRTUAL_ENV='virtual=yes'
       ;;
     v)
-      echo "Installing and Enabling Open ZWave" >&2
+      echo "  - Installing and Enabling Open ZWave" >&2
       ZWAVE_ENABLED='openzwave=yes'
       ;;
     m)
-      echo "Installing and Enabling Mosquitto" >&2
+      echo "  - Installing and Enabling Mosquitto" >&2
       MOS_ENABLED='mosquitto=yes'
+      ;;
+    u)
+      echo "  - Fabric username specified as: $OPTARG" >&2
+      FAB_USER=$OPTARG
+      ;;
+    p)
+      echo "  - Fabric Password specified as: $OPTARG" >&2
+      FAB_PASSWORD=$OPTARG
+      ;;
+    s)
+      echo "  - Mosquitto username specified as: $OPTARG" >&2
+      MOS_USER=$OPTARG
+      ;;
+    a)
+      echo "  - Mosquitto Password specified as: $OPTARG" >&2
+      MOS_PASSWORD=$OPTARG
+      ;;
+    r)
+      echo "  - Git repo to use is: $OPTARG" >&2
+      GIT_REPO=$OPTARG
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
+      HELP
       ;;
   esac
 done
 
 
-# fab new_user:myusername,admin=yes
-fab $VIRTUAL_ENV -H localhost 2>&1 | tee installation_report.txt
-
-# Options:
-# -n No Python virtual environment
-# -z Install ZWave components
-#
-
-usage() { echo "Usage: $0 [-n] [-z]" 1>&2; exit 1; }
-
-
+ 
 ## Run pre-install apt package dependency checks ##
-
 # Common packages
 #
-me=$(whoami)
+ME=$(whoami)
+echo -e "\n \e[39;49;1mCurrent User: \e[90m$ME\e[0m "
+if [ "root" == "$ME" ]; then
+  echo -e " \e[39;49;1mAborting! Do not install using root account! \e[0m "
+  echo -e " \e[39;49;1mMake a user with a command like this and log in with that account:\e[0m"
+  echo -e "    sudo adduser <username>"
+  echo -e "    sudo adduser <username> sudo"
+  exit
+fi
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
+echo -e " \e[39;49;1mUpdating packages and validating packages\e[0m "
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 
 sudo apt-get update
 
 PKG_PYDEV=$(dpkg-query -W --showformat='${Status}\n' python3-dev|grep "install ok installed")
-echo Checking for python3-dev: $PKG_PYDEV
+echo "   - Checking for python3-dev: $PKG_PYDEV"
 if [ "" == "$PKG_PYDEV" ]; then
-  echo "No python3-dev. Setting up python3-dev."
+  echo "   ! No python3-dev. Setting up python3-dev."
   sudo apt-get --force-yes --yes install python3-dev
 fi
 
 PKG_PYPIP=$(dpkg-query -W --showformat='${Status}\n' python3-pip|grep "install ok installed")
-echo Checking for python3-pip: $PKG_PYPIP
+echo "   - Checking for python3-pip: $PKG_PYPIP"
 if [ "" == "$PKG_PYPIP" ]; then
-  echo "No python3-pip. Setting up python3-pip."
+  echo "   ! No python3-pip. Setting up python3-pip."
   sudo apt-get --force-yes --yes install python3-pip
 fi
 
 PKG_GIT=$(dpkg-query -W --showformat='${Status}\n' git|grep "install ok installed")
-echo Checking for git: $PKG_GIT
+echo "   - Checking for git: $PKG_GIT"
 if [ "" == "$PKG_GIT" ]; then
-  echo "No git. Setting up git."
+  echo "   ! No git. Setting up git."
   sudo apt-get --force-yes --yes install git
 fi
 
 PKG_APTITUDE=$(dpkg-query -W --showformat='${Status}\n' aptitude|grep "install ok installed")
-echo Checking for aptitude: $PKG_APTITUDE
+echo "   - Checking for aptitude: $PKG_APTITUDE"
 if [ "" == "$PKG_APTITUDE" ]; then
-  echo "No aptitude. Setting up aptitude."
+  echo "   ! No aptitude. Setting up aptitude."
   sudo apt-get --force-yes --yes install aptitude
 fi
 
-sudo /usr/bin/pip install fabric
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
+echo -e " \e[39;49;1mInstalling Python Fabric\e[0m "
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
+sudo /usr/bin/pip3 install fabric
 
-git clone https://github.com/sytone/fabric-home-assistant.git
-cd /home/$me/fabric-home-assistant
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
+echo -e " \e[39;49;1mPulling the addtional install scripts\e[0m "
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
+echo -e "\n \e[39;49;1mGIT Repo: \e[90mhttps://github.com/$GIT_REPO/fabric-home-assistant.git\e[0m "
+git clone https://github.com/$GIT_REPO/fabric-home-assistant.git
+cd /home/$ME/fabric-home-assistant
+
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
+echo -e " \e[39;49;1mRunning fabric deployment\e[0m "
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
+echo -e "\n \e[39;49;1m - VIRTUAL_ENV   :\e[90m $VIRTUAL_ENV \e[0m "
+echo -e "\n \e[39;49;1m - ZWAVE_ENABLED :\e[90m $ZWAVE_ENABLED \e[0m "
+echo -e "\n \e[39;49;1m - MOS_ENABLED   :\e[90m $MOS_ENABLED \e[0m "
+echo -e "\n \e[39;49;1m - FAB_USER      :\e[90m $FAB_USER \e[0m "
+echo -e "\n \e[39;49;1m - FAB_PASSWORD  :\e[90m $FAB_PASSWORD \e[0m "
+echo -e "\n \e[39;49;1m - MOS_USER      :\e[90m $MOS_USER \e[0m "
+echo -e "\n \e[39;49;1m - MOS_PASSWORD  :\e[90m $MOS_PASSWORD \e[0m "
 
 
-
-deploy -H localhost 2>&1 | tee installation_report.txt )
+fab deploy:$VIRTUAL_ENV,$ZWAVE_ENABLED,$MOS_ENABLED,username=$FAB_USER,password=$FAB_PASSWORD,mosusername=$MOS_PASSWORD,mospassword=$MOS_PASSWORD -H localhost 2>&1 | tee installation_report.txt 
 exit
 

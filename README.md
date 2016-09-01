@@ -11,7 +11,9 @@ The only requirement is that you have a Raspberry Pi with a fresh installation o
 *  Run the following command
 
 ```bash
-$ wget -Nnv https://raw.githubusercontent.com/sytone/fabric-home-assistant/master/hass_installer.sh && bash hass_installer.sh
+$ wget -Nnv https://raw.githubusercontent.com/sytone/fabric-home-assistant/master/hass_installer.sh
+$ bash hass_installer.sh -vm -u fred -p fredspassword -s mquser -a mqpass -r sytone
+
 ```
 *Note this command is one line and not run as sudo*
 
