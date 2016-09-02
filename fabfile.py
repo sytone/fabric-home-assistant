@@ -105,6 +105,7 @@ def setup_dirs(mosquitto='no'):
         sudo("chown hass:hass hass")
     with cd ("/tmp"):
         sudo("mkdir -p hassinstall")
+        sudo("chmod 777 .")
     if mosquitto == 'yes':
         with cd ("/var/run/"):
             sudo("touch mosquitto.pid")
@@ -164,13 +165,13 @@ def setup_mosquitto(mosusername='pi',mospassword='raspberry'):
                         sudo("make")
                         sudo("make install")
                         with cd("/etc/mosquitto"):
-                            fabric.contrib.files.upload_template('mosquitto.conf.template', '/etc/mosquitto/mosquitto.conf', use_sudo=True)                            
+                            fabric.contrib.files.upload_template('mosquitto.conf.template', '/etc/mosquitto/mosquitto.conf', temp_dir='/tmp/hassinstall',use_sudo=True)                            
                             sudo("touch pwfile")
                             sudo("chown mosquitto: pwfile")
                             sudo("chmod 0600 pwfile")
                             sudo("sudo mosquitto_passwd -b pwfile %s %s" % (mosusername,mospassword))
     # Setup the service and start it. 
-    fabric.contrib.files.upload_template('mosquitto.service.template', '/etc/systemd/system/mosquitto.service', use_sudo=True)                            
+    fabric.contrib.files.upload_template('mosquitto.service.template', '/etc/systemd/system/mosquitto.service', temp_dir='/tmp/hassinstall', use_sudo=True)                            
     sudo("systemctl enable mosquitto.service")
     sudo("systemctl daemon-reload")
                             
@@ -219,7 +220,7 @@ def setup_openzwave_controlpanel():
     with cd("/srv/hass/src"):
         sudo("git clone https://github.com/OpenZWave/open-zwave-control-panel.git", user="hass")
         with cd("open-zwave-control-panel"):
-            fabric.contrib.files.upload_template('Makefile.template', 'Makefile', use_sudo=True)
+            fabric.contrib.files.upload_template('Makefile.template', 'Makefile', temp_dir='/tmp/hassinstall', use_sudo=True)
             sudo("make")
             if pi_hardware == "armv7l":
                 sudo("ln -sd /srv/hass/hass_venv/lib/python3.4/site-packages/libopenzwave-0.3.1-py3.4-linux-armv7l.egg/config")
@@ -238,7 +239,7 @@ mqtt:
   password: $mospassword
 """
     s = Template(hacfg)
-    fabric.contrib.files.append("/home/hass/.homeassistant/configuration.yaml", s.substitute(mosusername=mosusername, mospassword=mospassword), use_sudo=True)
+    fabric.contrib.files.append("/home/hass/.homeassistant/configuration.yaml", s.substitute(mosusername=mosusername, mospassword=mospassword), temp_dir='/tmp/hassinstall', use_sudo=True)
 
 def upgrade_homeassistant():
     """ Activate Venv, and upgrade Home Assistant to latest version """
@@ -247,11 +248,11 @@ def upgrade_homeassistant():
 
 def create_homeassistant_service(virtual='no'):
     if virtual == 'yes':
-        fabric.contrib.files.upload_template('home-assistant.service.template', '/etc/systemd/system/home-assistant.service', {'hasspath': '/srv/hass/hass_venv/bin/hass'}, use_sudo=True)
+        fabric.contrib.files.upload_template('home-assistant.service.template', '/etc/systemd/system/home-assistant.service', {'hasspath': '/srv/hass/hass_venv/bin/hass'}, temp_dir='/tmp/hassinstall', use_sudo=True)
         with settings(sudo_user='hass'):
             sudo("/srv/hass/hass_venv/bin/hass --script ensure_config --config /home/hass/.homeassistant")
     else:
-        fabric.contrib.files.upload_template('home-assistant.service.template', '/etc/systemd/system/home-assistant.service', {'hasspath': '/usr/local/bin/hass'}, use_sudo=True)
+        fabric.contrib.files.upload_template('home-assistant.service.template', '/etc/systemd/system/home-assistant.service', {'hasspath': '/usr/local/bin/hass'}, temp_dir='/tmp/hassinstall', use_sudo=True)
         with settings(sudo_user='hass'):
             sudo("/usr/local/bin/hass --script ensure_config --config /home/hass/.homeassistant")
     sudo("systemctl enable home-assistant.service")
