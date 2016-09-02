@@ -164,7 +164,7 @@ def setup_mosquitto(mosusername='pi',mospassword='raspberry'):
                         sudo("make")
                         sudo("make install")
                         with cd("/etc/mosquitto"):
-                            put("mosquitto.conf", "mosquitto.conf", use_sudo=True, temp_dir=/tmp/hassinstall)
+                            put("mosquitto.conf", "mosquitto.conf", use_sudo=True, temp_dir='/tmp/hassinstall')
                             sudo("touch pwfile")
                             sudo("chown mosquitto: pwfile")
                             sudo("chmod 0600 pwfile")
