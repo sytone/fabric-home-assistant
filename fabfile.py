@@ -164,13 +164,13 @@ def setup_mosquitto(mosusername='pi',mospassword='raspberry'):
                         sudo("make")
                         sudo("make install")
                         with cd("/etc/mosquitto"):
-                            put("mosquitto.conf", "mosquitto.conf", use_sudo=True, temp_dir='/tmp/hassinstall')
+                            fabric.contrib.files.upload_template('mosquitto.conf.template', '/etc/mosquitto/mosquitto.conf', use_sudo=True)                            
                             sudo("touch pwfile")
                             sudo("chown mosquitto: pwfile")
                             sudo("chmod 0600 pwfile")
                             sudo("sudo mosquitto_passwd -b pwfile %s %s" % (mosusername,mospassword))
-    with cd("/etc/systemd/system/"):
-        put("mosquitto.service", "mosquitto.service", use_sudo=True)        
+    # Setup the service and start it. 
+    fabric.contrib.files.upload_template('mosquitto.service.template', '/etc/systemd/system/mosquitto.service', use_sudo=True)                            
     sudo("systemctl enable mosquitto.service")
     sudo("systemctl daemon-reload")
                             
@@ -219,7 +219,7 @@ def setup_openzwave_controlpanel():
     with cd("/srv/hass/src"):
         sudo("git clone https://github.com/OpenZWave/open-zwave-control-panel.git", user="hass")
         with cd("open-zwave-control-panel"):
-            put("Makefile", "Makefile", use_sudo=True)
+            fabric.contrib.files.upload_template('Makefile.template', 'Makefile', use_sudo=True)
             sudo("make")
             if pi_hardware == "armv7l":
                 sudo("ln -sd /srv/hass/hass_venv/lib/python3.4/site-packages/libopenzwave-0.3.1-py3.4-linux-armv7l.egg/config")
