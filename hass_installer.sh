@@ -18,6 +18,7 @@ FAB_PASSWORD='raspberry'
 MOS_USER='pi'
 MOS_PASSWORD='raspberry'
 GIT_REPO='home-assistant'
+GIST_USERNAME=''
 
 #Set fonts for Help.
 NORM=`tput sgr0`
@@ -29,14 +30,15 @@ function HELP {
   echo -e \\n"Help documentation for ${BOLD}${SCRIPT}.${NORM}"\\n
   echo -e "${REV}Basic usage:${NORM} ${BOLD}$SCRIPT ${NORM}"\\n
   echo "Command line switches are optional. The following switches are recognized."
-  echo "${REV}-v${NORM}  --Enables the use of Python Virtual Environments."
-  echo "${REV}-z${NORM}  --Install Open ZWave."
-  echo "${REV}-m${NORM}  --Install Mosquitto."
+  echo "${REV}-v${NORM}  --Disables the use of Python Virtual Environments."
+  echo "${REV}-z${NORM}  --Do Not Install Open ZWave."
+  echo "${REV}-m${NORM}  --Do Not Install Mosquitto."
   echo "${REV}-u${NORM}  --Fabric username. Default is ${BOLD}pi${NORM}."
   echo "${REV}-p${NORM}  --Fabric Password. Default is ${BOLD}raspberry${NORM}."
   echo "${REV}-s${NORM}  --Mosquitto username. Default is ${BOLD}pi${NORM}."
   echo "${REV}-a${NORM}  --Mosquitto Password. Default is ${BOLD}raspberry${NORM}."
   echo "${REV}-r${NORM}  --Git Repo. Default is ${BOLD}sytone${NORM}."
+  echo "${REV}-l${NORM}  --Git Username to upload the installation log to. Default is none."
   echo -e "${REV}-h${NORM}  --Displays this help message. No further functions are performed."\\n
   echo -e "Example: ${BOLD}$SCRIPT -vzm${NORM}"\\n
   exit 1
@@ -47,19 +49,19 @@ echo -e " \e[39;49;1mHome Assistant Installer\e[0m "
 echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 
 
-while getopts ":vzmu:p:s:a:r:" opt; do
+while getopts ":vzmu:p:s:a:r:l:" opt; do
   case $opt in
     v)
-      echo "  - Python virtual environment being used." >&2
-      VIRTUAL_ENV='virtual=yes'
+      echo "  - Python virtual environment not being used." >&2
+      VIRTUAL_ENV='virtual=no'
       ;;
     v)
-      echo "  - Installing and Enabling Open ZWave" >&2
-      ZWAVE_ENABLED='openzwave=yes'
+      echo "  - Not Installing and Enabling Open ZWave" >&2
+      ZWAVE_ENABLED='openzwave=no'
       ;;
     m)
-      echo "  - Installing and Enabling Mosquitto" >&2
-      MOS_ENABLED='mosquitto=yes'
+      echo "  - Not Installing and Enabling Mosquitto" >&2
+      MOS_ENABLED='mosquitto=no'
       ;;
     u)
       echo "  - Fabric username specified as: $OPTARG" >&2
@@ -80,6 +82,10 @@ while getopts ":vzmu:p:s:a:r:" opt; do
     r)
       echo "  - Git repo to use is: $OPTARG" >&2
       GIT_REPO=$OPTARG
+      ;;
+    l)
+      echo "  - Uploading logs to $OPTARG on gist." >&2
+      GIST_USERNAME=$OPTARG
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -167,10 +173,30 @@ echo -e " \e[39;49;1m - FAB_USER      :\e[90m $FAB_USER \e[0m "
 echo -e " \e[39;49;1m - FAB_PASSWORD  :\e[90m $FAB_PASSWORD \e[0m "
 echo -e " \e[39;49;1m - MOS_USER      :\e[90m $MOS_USER \e[0m "
 echo -e " \e[39;49;1m - MOS_PASSWORD  :\e[90m $MOS_PASSWORD \e[0m "
+echo -e " \e[39;49;1m - GIT_REPO      :\e[90m $GIT_REPO \e[0m "
+echo -e " \e[39;49;1m - GIST_USERNAME :\e[90m $GIST_USERNAME \e[0m "
+
 echo -e " FAB Command:"
 echo -e "  fab deploy:$VIRTUAL_ENV,$ZWAVE_ENABLED,$MOS_ENABLED,username=$FAB_USER,password=$FAB_PASSWORD,mosusername=$MOS_USER,mospassword=$MOS_PASSWORD -H localhost"
 
+FNAME=installation_report.txt
 
-fab deploy:$VIRTUAL_ENV,$ZWAVE_ENABLED,$MOS_ENABLED,username=$FAB_USER,password=$FAB_PASSWORD,mosusername=$MOS_USER,mospassword=$MOS_PASSWORD -H localhost 2>&1 | tee installation_report.txt 
+fab deploy:$VIRTUAL_ENV,$ZWAVE_ENABLED,$MOS_ENABLED,username=$FAB_USER,password=$FAB_PASSWORD,mosusername=$MOS_USER,mospassword=$MOS_PASSWORD -H localhost 2>&1 | tee $FNAME
+
+CONTENT=$(sed -e 's/\r//' -e's/\t/\\t/g' -e 's/"/\\"/g' "${FNAME}" | awk '{ printf($0 "\\n") }')
+read -r -d '' DESC <<EOF
+{
+  "description": "some description",
+  "public": true,
+  "files": {
+    "${FNAME}": {
+      "content": "${CONTENT}"
+    }
+  }
+}
+EOF
+
+curl -u "${GIST_USERNAME}" -X POST -d "${DESC}" "https://api.github.com/gists"
+
 exit
 
