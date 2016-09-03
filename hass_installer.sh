@@ -168,9 +168,9 @@ echo -e " \e[39;49;1m - FAB_PASSWORD  :\e[90m $FAB_PASSWORD \e[0m "
 echo -e " \e[39;49;1m - MOS_USER      :\e[90m $MOS_USER \e[0m "
 echo -e " \e[39;49;1m - MOS_PASSWORD  :\e[90m $MOS_PASSWORD \e[0m "
 echo -e " FAB Command:"
-echo -e "  fab deploy:$VIRTUAL_ENV,$ZWAVE_ENABLED,$MOS_ENABLED,username=$FAB_USER,password=$FAB_PASSWORD,mosusername=$MOS_PASSWORD,mospassword=$MOS_PASSWORD -H localhost"
+echo -e "  fab deploy:$VIRTUAL_ENV,$ZWAVE_ENABLED,$MOS_ENABLED,username=$FAB_USER,password=$FAB_PASSWORD,mosusername=$MOS_USER,mospassword=$MOS_PASSWORD -H localhost"
 
 
-fab deploy:$VIRTUAL_ENV,$ZWAVE_ENABLED,$MOS_ENABLED,username=$FAB_USER,password=$FAB_PASSWORD,mosusername=$MOS_PASSWORD,mospassword=$MOS_PASSWORD -H localhost 2>&1 | tee installation_report.txt 
+fab deploy:$VIRTUAL_ENV,$ZWAVE_ENABLED,$MOS_ENABLED,username=$FAB_USER,password=$FAB_PASSWORD,mosusername=$MOS_USER,mospassword=$MOS_PASSWORD -H localhost 2>&1 | tee installation_report.txt 
 exit
 
