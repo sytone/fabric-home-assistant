@@ -104,35 +104,43 @@ echo -e " \e[38;5;93m───────────────────�
 echo -e " \e[39;49;1mUpdating packages and validating packages\e[0m "
 echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 
-sudo apt-get update
+sudo apt-get -qq update
 
 PKG_PYDEV=$(dpkg-query -W --showformat='${Status}\n' python3-dev|grep "install ok installed")
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 echo "   - Checking for python3-dev: $PKG_PYDEV"
 if [ "" == "$PKG_PYDEV" ]; then
   echo "   ! No python3-dev. Setting up python3-dev."
-  sudo apt-get --force-yes --yes install python3-dev
+  sudo apt-get -qq --force-yes --yes install python3-dev
 fi
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 
 PKG_PYPIP=$(dpkg-query -W --showformat='${Status}\n' python3-pip|grep "install ok installed")
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 echo "   - Checking for python3-pip: $PKG_PYPIP"
 if [ "" == "$PKG_PYPIP" ]; then
   echo "   ! No python3-pip. Setting up python3-pip."
-  sudo apt-get --force-yes --yes install python3-pip
+  sudo apt-get -qq --force-yes --yes install python3-pip
 fi
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 
 PKG_GIT=$(dpkg-query -W --showformat='${Status}\n' git|grep "install ok installed")
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 echo "   - Checking for git: $PKG_GIT"
 if [ "" == "$PKG_GIT" ]; then
   echo "   ! No git. Setting up git."
-  sudo apt-get --force-yes --yes install git
+  sudo apt-get -qq --force-yes --yes install git
 fi
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 
 PKG_APTITUDE=$(dpkg-query -W --showformat='${Status}\n' aptitude|grep "install ok installed")
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 echo "   - Checking for aptitude: $PKG_APTITUDE"
 if [ "" == "$PKG_APTITUDE" ]; then
   echo "   ! No aptitude. Setting up aptitude."
-  sudo apt-get --force-yes --yes install aptitude
+  sudo apt-get -qq --force-yes --yes install aptitude
 fi
+echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 
 echo -e " \e[38;5;93m──────────────────────────────────────────────────\e[0m"
 echo -e " \e[39;49;1mInstalling Python Fabric 3\e[0m "
