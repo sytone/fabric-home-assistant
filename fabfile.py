@@ -268,9 +268,6 @@ def deploy(virtual='no', openzwave='no', mosquitto='no',username='pi',password='
     env.user = username
     env.password = password
 
-    print("env.temp_dir: %s" % env.temp_dir)
-    print("temp_dir: %s" % temp_dir)
-    
     ## Install Start ##
     install_start()
 
