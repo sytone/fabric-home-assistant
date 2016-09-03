@@ -3,16 +3,17 @@
 
  ![image](images/hass_plu_fabric_logo.png)
 
-The [Raspberry Pi All-In-One Installer](https://github.com/home-assistant/fabric-home-assistant) deploys a complete Home Assistant server including support for MQTT with websockets, Z-Wave, and the Open-Zwave Control Panel.
+The [All-In-One Installer](https://github.com/home-assistant/fabric-home-assistant) deploys a complete Home Assistant server including support for MQTT with websockets, Z-Wave, and the Open-Zwave Control Panel.
 
+## Raspberry Pi
 The only requirement is that you have a Raspberry Pi with a fresh installation of [Raspbian Jessie/Jessie Lite](https://www.raspberrypi.org/downloads/raspbian/) connected to your network.
 
 *  Login to Raspberry Pi. For example with `ssh pi@your_raspberry_pi_ip`
 *  Run the following command
 
 ```bash
-$ wget -Nnv https://raw.githubusercontent.com/sytone/fabric-home-assistant/master/hass_installer.sh
-$ bash hass_installer.sh -vm -u fred -p fredspassword -s mquser -a mqpass -r sytone
+wget -Nnv https://raw.githubusercontent.com/home-assistant/fabric-home-assistant/master/hass_installer.sh
+bash hass_installer.sh -vm -u fred -p fredspassword -s mquser -a mqpass -r home-assistant
 
 ```
 *Note this command is one line and not run as sudo*
@@ -23,7 +24,33 @@ Installation will take approx. 1-2 hours depending on the Raspberry Pi model the
 
 Once rebooted, your Raspberry Pi will be up and running with Home Assistant. You can access it at [http://your_raspberry_pi_ip:8123](http://your_raspberry_pi_ip:8123).
 
-The Home Assistant configuration is located at `/home/hass`. The virtualenv with the Home Assistant installation is located at `/srv/hass/hass_venv`. As part of the secure installation, a new user is added to your Raspberry Pi to run Home Assistant as named, **hass**. This is a system account and does not have login or other abilities by design. When editing your configuration.yaml files, you will need to run the commands with "sudo" or by switching user.
+## Diet Pi
+
+This required Diet Pi V129 or higher, ensure you are using openSSH as the SSH server and *not* dropbear otherwise the fabric template commands will fail.
+
+Do not run this as root, make a user first to execute this and also use this user to admin the machine. To make a user run the following commands. 
+```bash
+sudo adduser yourchoosenusername
+sudo adduser yourchoosenusername sudo
+```
+
+*  Login to Diet Pi. For example with `ssh yourchoosenusername@your_diet_pi_ip`
+*  Run the following command
+
+```bash
+wget -Nnv https://raw.githubusercontent.com/home-assistant/fabric-home-assistant/master/hass_installer.sh
+bash hass_installer.sh -vm -u fred -p fredspassword -s mquser -a mqpass -r home-assistant
+```
+Use the following command to you the repo under sytone which may have more recent changes for install.
+```bash
+bash hass_installer.sh -vm -u fred -p fredspassword -s mquser -a mqpass -r sytone
+```
+*Note this command is one line and not run as sudo*
+
+## General
+The Home Assistant configuration is located at `/home/hass`. The virtualenv with the Home Assistant installation is located at `/srv/hass/hass_venv`. As 
+part of the secure installation, a new user is added to your server to run Home Assistant as named, **hass**. This is a system account and does not have 
+login or other abilities by design. When editing your configuration.yaml files, you will need to run the commands with "sudo" or by switching user.
 *Windows users* - Setting up WinSCP to allow this seemlessly is detailed below.
 
 By default, installation makes use of a Python Virtualenv. If you wish to not follow this recommendation, you may add the flag `-n` to the end of the install command specified above.

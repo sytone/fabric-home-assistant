@@ -10,14 +10,14 @@
 SCRIPT=`basename ${BASH_SOURCE[0]}`
 
 #Initialize variables to default values.
-VIRTUAL_ENV='virtual=no'
-ZWAVE_ENABLED='openzwave=no'
-MOS_ENABLED='mosquitto=no'
+VIRTUAL_ENV='virtual=yes'
+ZWAVE_ENABLED='openzwave=yes'
+MOS_ENABLED='mosquitto=yes'
 FAB_USER='pi'
 FAB_PASSWORD='raspberry'
 MOS_USER='pi'
 MOS_PASSWORD='raspberry'
-GIT_REPO='sytone'
+GIT_REPO='home-assistant'
 
 #Set fonts for Help.
 NORM=`tput sgr0`

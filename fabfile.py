@@ -82,7 +82,7 @@ def update_upgrade():
     sudo("apt-get update")
     sudo("apt-get upgrade -y")
 
-def setup_users(openzwave='no', mosquitto='no'):
+def setup_users(openzwave='yes', mosquitto='yes'):
     """ Create service users, etc """
     sudo("useradd --system hass")
     sudo("usermod -d /home/hass hass")
@@ -91,7 +91,7 @@ def setup_users(openzwave='no', mosquitto='no'):
     if openzwave == 'yes':
         sudo("usermod -G dialout -a hass")
     
-def setup_dirs(mosquitto='no'):
+def setup_dirs(mosquitto='yes'):
     """ Create all needed directories and change ownership """
     with cd("/srv"):
         sudo("mkdir hass")
@@ -149,8 +149,8 @@ def create_venv():
 def setup_mosquitto(mosusername='pi',mospassword='raspberry'):
     """ Build and Install Mosquitto """
     with cd("/tmp"):
-        sudo("curl -O https://github.com/warmcat/libwebsockets/archive/v1.4-chrome43-firefox-36.tar.gz")
-        sudo("tar xvf libwebsockets*")
+        sudo("curl -L -O https://github.com/warmcat/libwebsockets/archive/v1.4-chrome43-firefox-36.tar.gz")
+        sudo("tar xvf v1.4-chrome43-firefox-36.tar.gz")
         with cd("libwebsockets*"):
             sudo("mkdir build")
             with cd("build"):
@@ -175,7 +175,7 @@ def setup_mosquitto(mosusername='pi',mospassword='raspberry'):
     sudo("systemctl enable mosquitto.service")
     sudo("systemctl daemon-reload")
                             
-def setup_homeassistant(virtual='no'):
+def setup_homeassistant(virtual='yes'):
     """ Install Home-Assistant """
     with cd("/home/hass/"):
         sudo("chown -R hass:hass /home/hass/")
@@ -188,7 +188,7 @@ def setup_homeassistant(virtual='no'):
         sudo("/srv/hass/hass_venv/bin/hass --script ensure_config --config /home/hass/.homeassistant", user="hass")
 
 
-def setup_openzwave(virtual='no'):
+def setup_openzwave(virtual='yes'):
     """ Install python-openzwave """
     if virtual == 'no':
         sudo("pip3 install --upgrade cython", user="hass")
@@ -249,7 +249,7 @@ mqtt:
 
 
 
-def create_homeassistant_service(virtual='no'):
+def create_homeassistant_service(virtual='yes'):
     """ Enable applications to start at boot via systemd """
     if virtual == 'yes':
         fabric.contrib.files.upload_template('home-assistant.service.template', '/etc/systemd/system/home-assistant.service', {'hasspath': '/srv/hass/hass_venv/bin/hass'}, use_sudo=True)
@@ -271,7 +271,7 @@ def upgrade_homeassistant():
 # Deploy HASS
 ##################
 
-def deploy(virtual='no', openzwave='no', mosquitto='no',username='pi',password='raspberry',mosusername='pi',mospassword='raspberry'):
+def deploy(virtual='yes', openzwave='yes', mosquitto='yes',username='pi',password='raspberry',mosusername='pi',mospassword='raspberry'):
 
     env.user = username
     env.password = password
