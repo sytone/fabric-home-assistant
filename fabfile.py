@@ -177,12 +177,16 @@ def setup_mosquitto(mosusername='pi',mospassword='raspberry'):
                             
 def setup_homeassistant(virtual='no'):
     """ Install Home-Assistant """
+    with cd("/home/hass/"):
+        sudo("chown -R hass:hass /home/hass/")
     if virtual == 'no':
         sudo("pip3 install homeassistant", user="hass")
+        sudo("/usr/local/bin/hass --script ensure_config --config /home/hass/.homeassistant", user="hass")
     else:
-        sudo("source /srv/hass/hass_venv/bin/activate && pip3 install homeassistant", user="hass")
-        with cd("/home/hass/"):
-            sudo("chown -R hass:hass /home/hass/")
+        # Go straight to the virtual env pip3. 
+        sudo("/srv/hass/hass_venv/bin/pip3 install homeassistant", user="hass")
+        sudo("/srv/hass/hass_venv/bin/hass --script ensure_config --config /home/hass/.homeassistant", user="hass")
+
 
 def setup_openzwave(virtual='no'):
     """ Install python-openzwave """
@@ -229,7 +233,9 @@ def setup_openzwave_controlpanel():
         sudo("chown -R hass:hass /srv/hass/src/open-zwave-control-panel")
 
 def update_homeassistant_config(mosusername='pi',mospassword='raspberry'):
-    """ Enable applications to start at boot via systemd """
+    """
+        Update the HASS configuration to connect to the mqtt server.  
+    """
     hacfg="""
 mqtt:
   broker: 127.0.0.1
@@ -243,18 +249,15 @@ mqtt:
 
 def upgrade_homeassistant():
     """ Activate Venv, and upgrade Home Assistant to latest version """
-    sudo("source /srv/hass/hass_venv/bin/activate && pip3 install homeassistant --upgrade", user="hass")
+    sudo("/srv/hass/hass_venv/bin/pip3 install homeassistant --upgrade", user="hass")
 
 
 def create_homeassistant_service(virtual='no'):
+    """ Enable applications to start at boot via systemd """
     if virtual == 'yes':
         fabric.contrib.files.upload_template('home-assistant.service.template', '/etc/systemd/system/home-assistant.service', {'hasspath': '/srv/hass/hass_venv/bin/hass'}, use_sudo=True)
-        with settings(sudo_user='hass'):
-            sudo("/srv/hass/hass_venv/bin/hass --script ensure_config --config /home/hass/.homeassistant")
     else:
         fabric.contrib.files.upload_template('home-assistant.service.template', '/etc/systemd/system/home-assistant.service', {'hasspath': '/usr/local/bin/hass'}, use_sudo=True)
-        with settings(sudo_user='hass'):
-            sudo("/usr/local/bin/hass --script ensure_config --config /home/hass/.homeassistant")
     sudo("systemctl enable home-assistant.service")
     sudo("systemctl daemon-reload")
 
@@ -294,6 +297,7 @@ def deploy(virtual='no', openzwave='no', mosquitto='no',username='pi',password='
         setup_mosquitto(mosusername,mospassword)
 
     ## Activate, install Home-Assistant ##
+    setup_homeassistant(virtual)
     update_homeassistant_config(mosusername,mospassword)
     create_homeassistant_service(virtual)
     
