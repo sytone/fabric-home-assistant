@@ -149,7 +149,7 @@ def create_venv():
 def setup_mosquitto(mosusername='pi',mospassword='raspberry'):
     """ Build and Install Mosquitto """
     with cd("/tmp"):
-        sudo("curl -O https://libwebsockets.org/git/libwebsockets/snapshot/libwebsockets-1.4-chrome43-firefox-36.tar.gz")
+        sudo("curl -O https://github.com/warmcat/libwebsockets/archive/v1.4-chrome43-firefox-36.tar.gz")
         sudo("tar xvf libwebsockets*")
         with cd("libwebsockets*"):
             sudo("mkdir build")
@@ -247,9 +247,6 @@ mqtt:
     s = Template(hacfg)
     fabric.contrib.files.append("/home/hass/.homeassistant/configuration.yaml", s.substitute(mosusername=mosusername, mospassword=mospassword), use_sudo=True)
 
-def upgrade_homeassistant():
-    """ Activate Venv, and upgrade Home Assistant to latest version """
-    sudo("/srv/hass/hass_venv/bin/pip3 install homeassistant --upgrade", user="hass")
 
 
 def create_homeassistant_service(virtual='no'):
@@ -262,9 +259,17 @@ def create_homeassistant_service(virtual='no'):
     sudo("systemctl daemon-reload")
 
 
-#############
-## Deploy! ##
-#############
+##################
+# Upgrade HASS
+##################
+def upgrade_homeassistant():
+    """ Activate Venv, and upgrade Home Assistant to latest version """
+    sudo("/srv/hass/hass_venv/bin/pip3 install homeassistant --upgrade", user="hass")
+
+
+##################
+# Deploy HASS
+##################
 
 def deploy(virtual='no', openzwave='no', mosquitto='no',username='pi',password='raspberry',mosusername='pi',mospassword='raspberry'):
 

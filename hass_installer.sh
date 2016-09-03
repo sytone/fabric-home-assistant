@@ -2,7 +2,9 @@
 # Home Assistant Installer Kickstarter
 # Copyright (C) 2016 Jonathan Baginski - All Rights Reserved
 # Permission to copy and modify is granted under the MIT License
-# Last revised 5/15/2016
+# Modified to be more generic by Jon Bullen
+# Last revised 09/03/2016
+
 
 #Set Script Name variable
 SCRIPT=`basename ${BASH_SOURCE[0]}`
