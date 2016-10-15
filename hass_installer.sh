@@ -10,13 +10,13 @@
 SCRIPT=`basename ${BASH_SOURCE[0]}`
 
 #Initialize variables to default values.
-VIRTUAL_ENV='virtual=yes'
-ZWAVE_ENABLED='openzwave=yes'
-MOS_ENABLED='mosquitto=yes'
+VIRTUAL_ENV='virtual=no'   
+ZWAVE_ENABLED='openzwave=no'
+MOS_ENABLED='mosquitto=no'
 FAB_USER='pi'
 FAB_PASSWORD='raspberry'
 MOS_USER='pi'
-MOS_PASSWORD='raspberry'
+MOS_PASSWORD='raspberry' 
 GIT_REPO='home-assistant'
 GIST_USERNAME=''
 
@@ -30,15 +30,15 @@ function HELP {
   echo -e \\n"Help documentation for ${BOLD}${SCRIPT}.${NORM}"\\n
   echo -e "${REV}Basic usage:${NORM} ${BOLD}$SCRIPT ${NORM}"\\n
   echo "Command line switches are optional. The following switches are recognized."
-  echo "${REV}-v${NORM}  --Disables the use of Python Virtual Environments."
-  echo "${REV}-z${NORM}  --Do Not Install Open ZWave."
-  echo "${REV}-m${NORM}  --Do Not Install Mosquitto."
+  echo "${REV}-v${NORM}  --Enables the use of Python Virtual Environments."
+  echo "${REV}-z${NORM}  --Install Open ZWave."
+  echo "${REV}-m${NORM}  --Install Mosquitto."
   echo "${REV}-u${NORM}  --Fabric username. Default is ${BOLD}pi${NORM}."
   echo "${REV}-p${NORM}  --Fabric Password. Default is ${BOLD}raspberry${NORM}."
   echo "${REV}-s${NORM}  --Mosquitto username. Default is ${BOLD}pi${NORM}."
   echo "${REV}-a${NORM}  --Mosquitto Password. Default is ${BOLD}raspberry${NORM}."
   echo "${REV}-r${NORM}  --Git Repo. Default is ${BOLD}sytone${NORM}."
-  echo "${REV}-l${NORM}  --Git Username to upload the installation log to. Default is none."
+  echo "${REV}-l${NORM}  --Git Username to upload the installation log to. Default is none. (Beta)"
   echo -e "${REV}-h${NORM}  --Displays this help message. No further functions are performed."\\n
   echo -e "Example: ${BOLD}$SCRIPT -vzm${NORM}"\\n
   exit 1
@@ -52,16 +52,16 @@ echo -e " \e[38;5;93m───────────────────�
 while getopts ":vzmu:p:s:a:r:l:" opt; do
   case $opt in
     v)
-      echo "  - Python virtual environment not being used." >&2
-      VIRTUAL_ENV='virtual=no'
+      echo "  - Python virtual environment being used." >&2
+      VIRTUAL_ENV='virtual=yes'
       ;;
     v)
-      echo "  - Not Installing and Enabling Open ZWave" >&2
-      ZWAVE_ENABLED='openzwave=no'
+      echo "  - Installing and Enabling Open ZWave" >&2
+      ZWAVE_ENABLED='openzwave=yes'
       ;;
     m)
-      echo "  - Not Installing and Enabling Mosquitto" >&2
-      MOS_ENABLED='mosquitto=no'
+      echo "  - Installing and Enabling Mosquitto" >&2
+      MOS_ENABLED='mosquitto=yes'
       ;;
     u)
       echo "  - Fabric username specified as: $OPTARG" >&2
@@ -84,7 +84,7 @@ while getopts ":vzmu:p:s:a:r:l:" opt; do
       GIT_REPO=$OPTARG
       ;;
     l)
-      echo "  - Uploading logs to $OPTARG on gist." >&2
+      echo "  - Uploading logs to $OPTARG on gist. (Beta)" >&2
       GIST_USERNAME=$OPTARG
       ;;
     \?)
@@ -183,20 +183,20 @@ FNAME=installation_report.txt
 
 fab deploy:$VIRTUAL_ENV,$ZWAVE_ENABLED,$MOS_ENABLED,username=$FAB_USER,password=$FAB_PASSWORD,mosusername=$MOS_USER,mospassword=$MOS_PASSWORD -H localhost 2>&1 | tee $FNAME
 
-CONTENT=$(sed -e 's/\r//' -e's/\t/\\t/g' -e 's/"/\\"/g' "${FNAME}" | awk '{ printf($0 "\\n") }')
-read -r -d '' DESC <<EOF
-{
-  "description": "some description",
-  "public": true,
-  "files": {
-    "${FNAME}": {
-      "content": "${CONTENT}"
-    }
-  }
-}
-EOF
+#CONTENT=$(sed -e 's/\r//' -e's/\t/\\t/g' -e 's/"/\\"/g' "${FNAME}" | awk '{ printf($0 "\\n") }')
+#read -r -d '' DESC <<EOF
+# {
+#  "description": "some description",
+#  "public": true,
+#  "files": {
+#    "${FNAME}": {
+#      "content": "${CONTENT}"
+#    }
+#  }
+#}
+#EOF
 
-curl -u "${GIST_USERNAME}" -X POST -d "${DESC}" "https://api.github.com/gists"
+#curl -u "${GIST_USERNAME}" -X POST -d "${DESC}" "https://api.github.com/gists"
 
 exit
 

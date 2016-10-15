@@ -171,7 +171,8 @@ def setup_mosquitto(mosusername='pi',mospassword='raspberry'):
                             sudo("chmod 0600 pwfile")
                             sudo("sudo mosquitto_passwd -b pwfile %s %s" % (mosusername,mospassword))
     # Setup the service and start it. 
-    fabric.contrib.files.upload_template('mosquitto.service.template', '/etc/systemd/system/mosquitto.service', use_sudo=True)                            
+    fabric.contrib.files.upload_template('mosquitto.service.template', '/etc/systemd/system/mosquitto.service', use_sudo=True)
+    sudo("chown -R root:root /etc/systemd/system/mosquitto.service")                            
     sudo("systemctl enable mosquitto.service")
     sudo("systemctl daemon-reload")
                             
@@ -255,6 +256,8 @@ def create_homeassistant_service(virtual='yes'):
         fabric.contrib.files.upload_template('home-assistant.service.template', '/etc/systemd/system/home-assistant.service', {'hasspath': '/srv/hass/hass_venv/bin/hass'}, use_sudo=True)
     else:
         fabric.contrib.files.upload_template('home-assistant.service.template', '/etc/systemd/system/home-assistant.service', {'hasspath': '/usr/local/bin/hass'}, use_sudo=True)
+    
+    sudo("chown -R root:root /etc/systemd/system/home-assistant.service")
     sudo("systemctl enable home-assistant.service")
     sudo("systemctl daemon-reload")
 
@@ -271,7 +274,7 @@ def upgrade_homeassistant():
 # Deploy HASS
 ##################
 
-def deploy(virtual='yes', openzwave='yes', mosquitto='yes',username='pi',password='raspberry',mosusername='pi',mospassword='raspberry'):
+def deploy(virtual='yes', openzwave='yes', mosquitto='yes', username='pi', password='raspberry', mosusername='pi', mospassword='raspberry'):
 
     env.user = username
     env.password = password
