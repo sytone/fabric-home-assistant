@@ -227,10 +227,10 @@ def setup_openzwave_controlpanel():
         with cd("open-zwave-control-panel"):
             fabric.contrib.files.upload_template('Makefile.template', 'Makefile', use_sudo=True)
             sudo("make")
-            #if pi_hardware == "armv7l":
+            if pi_hardware == "armv7l":
                 sudo("ln -sd /srv/hass/hass_venv/lib/python3.4/site-packages/libopenzwave-0.3.1-py3.4-linux-armv7l.egg/config")
-            #else:
-                #sudo("ln -sd /srv/hass/hass_venv/lib/python3.4/site-packages/libopenzwave-0.3.1-py3.4-linux-armv**6**l.egg/config")
+            else:
+                sudo("ln -sd /srv/hass/hass_venv/lib/python3.4/site-packages/libopenzwave-0.3.1-py3.4-linux-armv**6**l.egg/config")
         sudo("chown -R hass:hass /srv/hass/src/open-zwave-control-panel")
 
 def update_homeassistant_config(mosusername='pi',mospassword='raspberry'):
