@@ -55,7 +55,7 @@ while getopts ":vzmu:p:s:a:r:l:" opt; do
       echo "  - Python virtual environment being used." >&2
       VIRTUAL_ENV='virtual=yes'
       ;;
-    v)
+    z)
       echo "  - Installing and Enabling Open ZWave" >&2
       ZWAVE_ENABLED='openzwave=yes'
       ;;
